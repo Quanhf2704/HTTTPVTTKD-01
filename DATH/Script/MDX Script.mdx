@@ -1,0 +1,207 @@
+--Cau 1: Report the min and max of AQI value for each State during each quarter of
+--years.
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	NON EMPTY {[DIM LOCATION].[State Name].[State Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Max Aqi];
+
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	NON EMPTY {[DIM LOCATION].[State Name].[State Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Min AQI];
+
+--Cau 2: Report the mean and the standard deviation of AQI value for each State during
+--each quarter of years.
+WITH MEMBER [Measures].[State AQI] AS
+	AVG([DIM LOCATION].[State Name].[State Name],
+	[Measures].[Aqi])
+
+SELECT 
+    {[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON COLUMNS,
+	NON EMPTY {[DIM LOCATION].[State Name].[State Name]} ON ROWS
+
+FROM 
+    [DDS Group01]
+
+WHERE 
+    [Measures].[State AQI]
+
+WITH MEMBER [Measures].[State AQI] AS
+	STDEV([DIM LOCATION].[State Name].[State Name],
+	[Measures].[Aqi])
+
+SELECT 
+    {[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON COLUMNS,
+	NON EMPTY {[DIM LOCATION].[State Name].[State Name]} ON ROWS
+
+FROM 
+    [DDS Group01]
+
+WHERE 
+    [Measures].[State AQI]
+
+--Cau3: Report the number of days, and the mean AQI value where the air quality is rated
+--as "very unhealthy" or worse for each State and County.
+SELECT 
+non empty{
+    [DIM CATEGORY].[Category Name].&[Very Unhealthy],
+	[DIM CATEGORY].[Category Name].&[Hazardous]
+} ON COLUMNS,
+non empty{
+    [DIM LOCATION].[State Name].[State Name]*
+	[DIM LOCATION].[County Name].[County Name]
+} ON ROWS
+FROM [DDS Group01]
+WHERE [Measures].[FACT AQI Count];
+
+--Cau4: For the four following states: Hawaii, Alaska, Illinois and Delaware, count the
+--number of days in each air quality Category (Good, Moderate,etc.) by County.
+SELECT 
+    NON EMPTY {
+        [DIM CATEGORY].[Category Name].[Category Name]
+    } ON COLUMNS,
+    NON EMPTY {
+        {
+            [DIM LOCATION].[State Name].[Hawaii],
+            [DIM LOCATION].[State Name].[Alaska],
+            [DIM LOCATION].[State Name].[Illinois],
+            [DIM LOCATION].[State Name].[Delaware]
+        } * 
+        [DIM LOCATION].[County Name].[County Name]
+    } ON ROWS
+FROM [DDS Group01]
+WHERE [Measures].[FACT AQI Count];
+
+--Cau 5: For the four following states: Hawaii, Alaska, Illinois and Delaware, compute the
+--mean AQI value by quarters.
+WITH MEMBER [Measures].[State AQI] AS
+	AVG([DIM LOCATION].[State Name].[State Name],
+	[Measures].[Aqi])
+
+SELECT 
+    {[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON COLUMNS,
+	NON EMPTY {[DIM LOCATION].[State Name].&[Hawaii],
+	[DIM LOCATION].[State Name].&[Alaska],
+	[DIM LOCATION].[State Name].&[Illinois],
+	[DIM LOCATION].[State Name].&[Delaware]} ON ROWS
+
+FROM 
+    [DDS Group01]
+
+WHERE 
+    [Measures].[State AQI]
+
+-- Cau 6: Design a report to demonstrate the AQI fluctuation trends over the year for the four
+--following states: Hawaii, Alaska, Illinois and California.
+WITH MEMBER [Measures].[State AQI] AS
+	AVG([DIM LOCATION].[State Name].[State Name],
+	[Measures].[Aqi])
+
+SELECT 
+    {[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON COLUMNS,
+	NON EMPTY {[DIM LOCATION].[State Name].&[Hawaii],
+	[DIM LOCATION].[State Name].&[Alaska],
+	[DIM LOCATION].[State Name].&[Illinois],
+	[DIM LOCATION].[State Name].&[Delaware]} ON ROWS
+
+FROM 
+    [DDS Group01]
+
+WHERE 
+    [Measures].[State AQI]
+
+--Cau 9: Report the mean, the standard deviation, min and max of AQI value group by
+--State and County during each quarter of the year. 
+--Max
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	NON EMPTY 
+	{[DIM LOCATION].[State Name].[State Name]*
+	[DIM LOCATION].[County Name].[County Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Max Aqi];
+
+--Min
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	NON EMPTY 
+	{[DIM LOCATION].[State Name].[State Name]* 
+	[DIM LOCATION].[County Name].[County Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Min Aqi];
+
+--Mean
+WITH 
+MEMBER [Measures].[Max] AS MAX([DIM LOCATION].[County Name].[County Name], [Measures].[Max Aqi])
+MEMBER [Measures].[Min] AS MIN([DIM LOCATION].[County Name].[County Name], [Measures].[Min Aqi])
+MEMBER [Measures].[Avg] AS AVG([DIM LOCATION].[County Name].[County Name], [Measures].[Mean Aqi])
+MEMBER [Measures].[Std] AS STDEV([DIM LOCATION].[County Name].[County Name], [Measures].[Std Aqi])
+
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	{[DIM LOCATION].[State Name].[State Name]*[DIM LOCATION].[County Name].[County Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Avg];
+
+--Std
+WITH 
+MEMBER [Measures].[Max] AS MAX([DIM LOCATION].[County Name].[County Name], [Measures].[Max Aqi])
+MEMBER [Measures].[Min] AS MIN([DIM LOCATION].[County Name].[County Name], [Measures].[Min Aqi])
+MEMBER [Measures].[Avg] AS AVG([DIM LOCATION].[County Name].[County Name], [Measures].[Mean Aqi])
+MEMBER [Measures].[Std] AS STDEV([DIM LOCATION].[County Name].[County Name], [Measures].[Std Aqi])
+
+SELECT 
+	{[DIM DATE].[Year].[Year]*[DIM DATE].[Quarter].[Quarter]} ON ROWS,
+	{[DIM LOCATION].[State Name].[State Name]*[DIM LOCATION].[County Name].[County Name]} ON COLUMNS 
+
+FROM
+	[DDS Group01]
+
+WHERE
+	[Measures].[Std];
+
+--Cau11: Count the number of days by State, Category in each month.
+SELECT 
+non empty{
+	[DIM DATE].[Month].[Month]*
+	[DIM DATE].[Year].[Year]
+} ON COLUMNS,
+non empty{
+    [DIM LOCATION].[State Name].[State Name]*
+    [DIM CATEGORY].[Category Name].[Category Name]
+} ON ROWS
+FROM [DDS Group01]
+WHERE [Measures].[FACT AQI Count];
+
+--Cau12: Report the number of days by Category and Defining Parameter.
+SELECT 
+non empty{
+    [DIM CATEGORY].[Category Name].[Category Name]
+} ON COLUMNS,
+non empty{
+    	[DIM DEFINING PARAMETER].[Defining Parameter].[Defining Parameter]
+} ON ROWS
+FROM [DDS Group01]
+WHERE [Measures].[FACT AQI Count]
