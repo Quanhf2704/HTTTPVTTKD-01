@@ -1,3 +1,0 @@
-Source -> stage -> NDS: https://youtu.be/SUuAycxEueI?si=ti0nvjIGDYIWsKno
-NDS -> DDS, OLAP: https://youtu.be/JiBU-zmJCFg?si=-W7MT4H_YXaQLsHo
-MDX vs Power BI: https://youtu.be/wsTm4wKqRVY?si=kNwYoJLzrtGy-qge
